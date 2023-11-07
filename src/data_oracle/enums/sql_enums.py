@@ -15,3 +15,12 @@ class Sql_Types(Enum):
     MICROSOFTSQLSERVER = 'Microsoft SQL Server'
     SQLITE = 'SQLite'
     BIGQUERY = 'BigQuery'
+
+class data_types(Enum):
+    INTEGER = "INT"
+    VARCHAR = "VARCHAR"
+    DATE = "DATE"
+
+class Data_Table_Type(Enum):
+    TABLE = "Table"
+    VIEW = "View"

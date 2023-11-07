@@ -2,7 +2,7 @@ import asyncio
 from .baseconnector import BaseDBConnector
 from typing import Type
 from sqlalchemy import create_engine, URL, inspect, text
-from sqlalchemy.base import Engine
+
 from overrides import override
 
 class connectionDetails:
@@ -24,7 +24,7 @@ class SqlAlchemyConnector(BaseDBConnector):
         super().__init__(connection_data)
 
     @override
-    def connect(self,connection_data:Type[connectionDetails])->Type[Engine]:
+    def connect(self,connection_data:Type[connectionDetails]):
         #connection_data.database_type
         drivername_mapper = {
             'MySQL' : 'mysql+pymysql',
