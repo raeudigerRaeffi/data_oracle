@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "data_oracle"
+version = "0.0.1"
+authors = [
+  { name="Raffael Schön", email="raffaelscho@gmail.com" },
+]
+description = "A package covering all utilities required for text to sql"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/raeudigerRaeffi/data_oracle"
+"Bug Tracker" = "https://github.com/raeudigerRaeffi/data_oracle/issues"
+
+
+
