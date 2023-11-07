@@ -2,29 +2,21 @@ import asyncio
 from .baseconnector import BaseDBConnector
 from typing import Type
 from sqlalchemy import create_engine, URL, inspect, text
-
+from .database_schema import *
+from .connection_class import connection_details
 from overrides import override
 
-class connectionDetails:
-
-    def __init__(self,database_type,username,password,host,port,database_name):
-        self.database_type = database_type
-        self.username = username
-        self.password = password
-        self.host = host
-        self.port = port
-        self.database_name = database_name
 
 
 class SqlAlchemyConnector(BaseDBConnector):
     """
     Connector available for all
     """
-    def __init__(self,connection_data:Type[connectionDetails]):
+    def __init__(self, connection_data:Type[connection_details]):
         super().__init__(connection_data)
 
     @override
-    def connect(self,connection_data:Type[connectionDetails]):
+    def connect(self, connection_data):
         #connection_data.database_type
         drivername_mapper = {
             'MySQL' : 'mysql+pymysql',
@@ -69,12 +61,12 @@ class SqlAlchemyConnector(BaseDBConnector):
         """
         return inspect(self.connection).get_view_names()
 
-    def return_all_table_column_info(self,table_name:str):
+    def return_all_table_column_info(self,table_name):
         return inspect(self.connection).get_columns(table_name)
 
 
     @override
-    def return_table_columns(self,table_name:str):
+    def return_table_columns(self,table_name):
         """
         Returns list of columns of table
         """
@@ -82,7 +74,7 @@ class SqlAlchemyConnector(BaseDBConnector):
         return [x['name'] for x in all_info]
 
     @override
-    def execute_sql_statement(self,_sql:str):
+    def execute_sql_statement(self,_sql):
         """
         @_sql:str
         Returns result of sql statement

@@ -1,12 +1,12 @@
-
-
+from typing import Union
+from .connection_class import connection_details
+connection_info = Union[connection_details]
 class BaseDBConnector:
 
-    def __init__(self,connection_data):
+    def __init__(self,connection_data:connection_info):
         self.connection = self.connect(connection_data)
-        pass
 
-    def connect(self):
+    def connect(self,connection_data):
         """
         Returns a connection object to DB
         """

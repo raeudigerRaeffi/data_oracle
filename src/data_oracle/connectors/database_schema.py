@@ -17,4 +17,16 @@ class Table:
         self.columns = _columns
         self.type = _type
 
+class Database:
+    def __init__(self,_name:str):
+        self.name = _name
+        self.tables = {}
+
+    def register_table(self,_table:Type[Table]):
+        self.tables[_table.name] = _table
+
+    def register_tables(self, _tables:list[Table]):
+        for _table in _tables:
+            self.register_table(_table)
+
 
