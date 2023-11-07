@@ -6,7 +6,7 @@ class BaseDBConnector:
         self.connection = self.connect(connection_data)
         pass
 
-    def connect(self,connection_data):
+    def connect(self):
         """
         Returns a connection object to DB
         """
