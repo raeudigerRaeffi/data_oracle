@@ -1,4 +1,3 @@
 src/main.py
 src/Dockerfile
 src/requirements.txt
-dist
