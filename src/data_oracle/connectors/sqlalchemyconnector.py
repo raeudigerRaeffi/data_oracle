@@ -2,9 +2,10 @@ import asyncio
 from .baseconnector import BaseDBConnector
 from typing import Type
 from sqlalchemy import create_engine, URL, inspect, text
-from .database_schema import *
+from .database_schema import Column,Table
 from .connection_class import connection_details
 from overrides import override
+from ..enums import data_types,Data_Table_Type
 
 
 
@@ -62,16 +63,23 @@ class SqlAlchemyConnector(BaseDBConnector):
         return inspect(self.connection).get_view_names()
 
     def return_all_table_column_info(self,table_name):
-        return inspect(self.connection).get_columns(table_name)
+        out = []
+        all_cols = inspect(self.connection).get_columns(table_name)
+        for _col in all_cols:
+            new_col = Column(_col["name"],_col["type"])
+            out.append(new_col)
+
+        return out
 
 
     @override
-    def return_table_columns(self,table_name):
+    def return_table_columns(self,table_name,_table_type):
         """
         Returns list of columns of table
         """
         all_info = self.return_all_table_column_info(table_name)
-        return [x['name'] for x in all_info]
+
+        return Table(table_name,all_info,_table_type)
 
     @override
     def execute_sql_statement(self,_sql):
