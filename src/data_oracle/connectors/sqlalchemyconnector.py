@@ -2,42 +2,41 @@ import asyncio
 from .baseconnector import BaseDBConnector
 from typing import Type
 from sqlalchemy import create_engine, URL, inspect, text
-from .database_schema import Column,Table
+from .database_schema import Column, Table
 from .connection_class import connection_details
 from overrides import override
-from ..enums import data_types,Data_Table_Type
-
+from ..enums import data_types, Data_Table_Type
 
 
 class SqlAlchemyConnector(BaseDBConnector):
     """
     Connector available for all
     """
-    def __init__(self, connection_data:Type[connection_details]):
+
+    def __init__(self, connection_data: Type[connection_details]):
         super().__init__(connection_data)
         self.inspection = inspect(self.connection)
         self.fk_relations = {}
         self.pk = {}
 
-
     @override
     def connect(self, connection_data):
-        #connection_data.database_type
+        # connection_data.database_type
         drivername_mapper = {
-            'MySQL' : 'mysql+pymysql',
-            'PostgreSQL' : 'postgresql+psycopg2',
-            'Oracle' : 'oracle+oracledb',
-            'Microsoft SQL Server' : 'mssql+pyodbc',
-            'SQLite' : 'sqlite',
+            'MySQL': 'mysql+pymysql',
+            'PostgreSQL': 'postgresql+psycopg2',
+            'Oracle': 'oracle+oracledb',
+            'Microsoft SQL Server': 'mssql+pyodbc',
+            'SQLite': 'sqlite',
         }
         driver = drivername_mapper[connection_data.database_type]
         url_object = URL.create(
             driver,
-            username = connection_data.username,
-            password = connection_data.password,
-            host = connection_data.host,
-            port = connection_data.port,
-            database= connection_data.database_name,
+            username=connection_data.username,
+            password=connection_data.password,
+            host=connection_data.host,
+            port=connection_data.port,
+            database=connection_data.database_name,
         )
         return create_engine(url_object)
 
@@ -59,7 +58,7 @@ class SqlAlchemyConnector(BaseDBConnector):
         """
         table_names = self.inspection.get_table_names()
         for _table in table_names:
-            self.pk[_table] = {x:x for x in self.inspection.get_pk_constraint(_table)["constrained_columns"]}
+            self.pk[_table] = {x: x for x in self.inspection.get_pk_constraint(_table)["constrained_columns"]}
             self.fk_relations[_table] = {}
             fk_relations = self.inspection.get_foreign_keys(_table)
             for fk_relation in fk_relations:
@@ -75,7 +74,7 @@ class SqlAlchemyConnector(BaseDBConnector):
         """
         return self.inspection.get_view_names()
 
-    def return_all_table_column_info(self,table_name):
+    def return_all_table_column_info(self, table_name):
         out = []
         all_cols = self.inspection.get_columns(table_name)
         for _col in all_cols:
@@ -89,23 +88,22 @@ class SqlAlchemyConnector(BaseDBConnector):
             if _name in self.pk[table_name]:
                 _is_pk = True
 
-            new_col = Column(_name,_col["type"],_is_pk,_is_fk,_fk_to)
+            new_col = Column(_name, _col["type"], _is_pk, _is_fk, _fk_to)
             out.append(new_col)
 
         return out
 
-
     @override
-    def return_table_columns(self,table_name,_table_type):
+    def return_table_columns(self, table_name, _table_type):
         """
         Returns list of columns of table
         """
         all_info = self.return_all_table_column_info(table_name)
-
-        return Table(table_name,all_info,_table_type)
+        _pk_name = self.inspection.get_pk_constraint(table_name)['name']
+        return Table(table_name, _pk_name, all_info, _table_type)
 
     @override
-    def execute_sql_statement(self,_sql):
+    def execute_sql_statement(self, _sql):
         """
         @_sql:str
         Returns result of sql statement
