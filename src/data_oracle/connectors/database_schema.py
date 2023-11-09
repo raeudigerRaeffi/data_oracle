@@ -11,9 +11,10 @@ class BaseDbObject:
         return str(vars(self))
 
 class Column(BaseDbObject):
-    def __init__(self, _name:str, _type, _is_fk:bool=False, _fk_to:str=None):
+    def __init__(self, _name:str, _type, _is_pk=False, _is_fk:bool=False, _fk_to:str=None):
         self.name = _name
         self.type = _type
+        self.is_pk = _is_pk
         if _is_fk and not isinstance(_fk_to,str):
             raise ValueError(f'_fk_to needs to be a string pointing to a table, but you provided {_fk_to}')
 
@@ -21,10 +22,7 @@ class Column(BaseDbObject):
         self.fk_table = _fk_to
 
     def return_data(self):
-        return {
-            "name" : self.name,
-            "data_type" : self.type
-        }
+        return vars(self)
 
 class Table(BaseDbObject):
 
@@ -32,9 +30,13 @@ class Table(BaseDbObject):
         self.name = _name
         self.columns = _columns
         self.type = _type
+        self.pk = [x for x in _columns if x.is_pk]
 
     def return_columns(self):
         return [x.return_data() for x in self.columns]
+
+    def has_pk(self):
+        return len(self.pk) > 0
 
 
 class Database(BaseDbObject):

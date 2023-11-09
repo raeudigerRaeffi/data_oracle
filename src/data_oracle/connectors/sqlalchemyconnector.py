@@ -15,6 +15,10 @@ class SqlAlchemyConnector(BaseDBConnector):
     """
     def __init__(self, connection_data:Type[connection_details]):
         super().__init__(connection_data)
+        self.inspection = inspect(self.connection)
+        self.fk_relations = {}
+        self.pk = {}
+
 
     @override
     def connect(self, connection_data):
@@ -51,22 +55,41 @@ class SqlAlchemyConnector(BaseDBConnector):
     @override
     def return_table_names(self):
         """
-        Returns list of table names
+        Returns list of table names and detects fk and pk columns
         """
-        return inspect(self.connection).get_table_names()
+        table_names = self.inspection.get_table_names()
+        for _table in table_names:
+            self.pk[_table] = {x:x for x in self.inspection.get_pk_constraint(_table)["constrained_columns"]}
+            self.fk_relations[_table] = {}
+            fk_relations = self.inspection.get_foreign_keys(_table)
+            for fk_relation in fk_relations:
+                for _col in fk_relation["constrained_columns"]:
+                    self.fk_relations[_table][_col] = fk_relation["referred_table"]
+
+        return table_names
 
     @override
     def return_view_names(self):
         """
         Returns list of view names
         """
-        return inspect(self.connection).get_view_names()
+        return self.inspection.get_view_names()
 
     def return_all_table_column_info(self,table_name):
         out = []
-        all_cols = inspect(self.connection).get_columns(table_name)
+        all_cols = self.inspection.get_columns(table_name)
         for _col in all_cols:
-            new_col = Column(_col["name"],_col["type"])
+            _name = _col["name"]
+            _is_pk = False
+            _is_fk = False
+            _fk_to = None
+            if _name in self.fk_relations[table_name]:
+                _is_fk = True
+                _fk_to = self.fk_relations[table_name][_name]
+            if _name in self.pk[table_name]:
+                _is_pk = True
+
+            new_col = Column(_name,_col["type"],_is_pk,_is_fk,_fk_to)
             out.append(new_col)
 
         return out
