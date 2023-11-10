@@ -2,7 +2,7 @@ import asyncio
 from .baseconnector import BaseDBConnector
 from typing import Type
 from sqlalchemy import create_engine, URL, inspect, text
-from .database_schema import Column, Table
+from .database_schema import Column, Table, Foreign_Key_Relation
 from .connection_class import connection_details
 from overrides import override
 from ..enums import data_types, Data_Table_Type
@@ -84,11 +84,10 @@ class SqlAlchemyConnector(BaseDBConnector):
             _fk_to = None
             if _name in self.fk_relations[table_name]:
                 _is_fk = True
-                _fk_to = self.fk_relations[table_name][_name]
             if _name in self.pk[table_name]:
                 _is_pk = True
 
-            new_col = Column(_name, _col["type"], _is_pk, _is_fk, _fk_to)
+            new_col = Column(_name, _col["type"], _is_pk, _is_fk)
             out.append(new_col)
 
         return out
@@ -100,7 +99,12 @@ class SqlAlchemyConnector(BaseDBConnector):
         """
         all_info = self.return_all_table_column_info(table_name)
         _pk_name = self.inspection.get_pk_constraint(table_name)['name']
-        return Table(table_name, _pk_name, all_info, _table_type)
+        fk_relations = [Foreign_Key_Relation(
+            x["constrained_columns"],
+            x["referred_table"],
+            x["referred_columns"])
+            for x in self.inspection.get_foreign_keys(table_name)]
+        return Table(table_name, _pk_name, all_info, _table_type,fk_relations)
 
     @override
     def execute_sql_statement(self, _sql):
