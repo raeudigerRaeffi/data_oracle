@@ -9,8 +9,9 @@ class BaseDbObject:
     def __repr__(self):
         return str(vars(self))
 
+
 class Foreign_Key_Relation(BaseDbObject):
-    def __init__(self,_cols:list[str],ref_table:str,ref_cols:list[str]):
+    def __init__(self, _cols: list[str], ref_table: str, ref_cols: list[str]):
         self.constrained_columns = _cols
         self.referred_table = ref_table
         self.referred_columns = ref_cols
@@ -42,7 +43,7 @@ class Table(BaseDbObject):
                  _pk_name: str,
                  _columns: list[Column],
                  _type: Type[Data_Table_Type],
-                 _fk_relations:list[Foreign_Key_Relation]):
+                 _fk_relations: list[Foreign_Key_Relation]):
         self.name = _name
         self.columns = _columns
         self.type = _type
@@ -98,3 +99,12 @@ class Database(BaseDbObject):
             for _table in current_table_type:
                 out[table_type][_table] = current_table_type[_table].return_columns()
         return out
+
+    def return_tables(self, _key: Type[Data_Table_Type]):
+        return [self.tables[_key][x] for x in self.tables[_key].keys()]
+
+    def return_string_schema(self,include_views = False):
+        _all_tables = self.return_tables(Data_Table_Type.TABLE)
+        if include_views:
+            _all_tables += self.return_tables(Data_Table_Type.VIEW)
+        return "\n\n".join([x.code_representation_str() for x in _all_tables])
