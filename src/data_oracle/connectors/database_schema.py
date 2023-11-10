@@ -16,7 +16,7 @@ class Foreign_Key_Relation(BaseDbObject):
         self.referred_table = ref_table
         self.referred_columns = ref_cols
 
-    def return_sql_definition(self):
+    def return_sql_definition(self) -> str:
         _out = f'FOREIGN KEY ({",".join(self.constrained_columns)}) REFERENCES '
         _out += f'{self.referred_table}({",".join(self.referred_columns)})'
         return _out
@@ -29,10 +29,10 @@ class Column(BaseDbObject):
         self.is_pk = _is_pk
         self.is_fk = _is_fk
 
-    def return_data(self):
+    def return_data(self) -> dict:
         return vars(self)
 
-    def return_sql_definition(self):
+    def return_sql_definition(self) -> str:
         return f'{self.name} {self.type}'
 
 
@@ -51,13 +51,13 @@ class Table(BaseDbObject):
         self.pk_name = _pk_name
         self.fk_relations = _fk_relations
 
-    def return_columns(self):
+    def return_columns(self) -> list[dict]:
         return [x.return_data() for x in self.columns]
 
-    def has_pk(self):
+    def has_pk(self) -> bool:
         return len(self.pk) > 0
 
-    def code_representation_str(self):
+    def code_representation_str(self) -> str:
         _str_repr = ""
         _str_repr += f"CREATE TABLE {self.name}(\n"
         _str_repr += ",\n".join([x.return_sql_definition() for x in self.columns])
@@ -84,10 +84,10 @@ class Database(BaseDbObject):
             Data_Table_Type.VIEW: {}
         }
 
-    def register_table(self, _table: Type[Table]):
+    def register_table(self, _table: Type[Table]) -> None:
         self.tables[_table.type][_table.name] = _table
 
-    def register_tables(self, _tables: list[Table]):
+    def register_tables(self, _tables: list[Table]) -> None:
         for _table in _tables:
             self.register_table(_table)
 
@@ -100,11 +100,24 @@ class Database(BaseDbObject):
                 out[table_type][_table] = current_table_type[_table].return_columns()
         return out
 
-    def return_tables(self, _key: Type[Data_Table_Type]):
+    def return_tables(self, _key: Data_Table_Type) -> list[Type[Table]]:
         return [self.tables[_key][x] for x in self.tables[_key].keys()]
 
-    def return_string_schema(self,include_views = False):
+    def return_code_repr_schema(self, include_views=False) -> str:
         _all_tables = self.return_tables(Data_Table_Type.TABLE)
         if include_views:
             _all_tables += self.return_tables(Data_Table_Type.VIEW)
         return "\n\n".join([x.code_representation_str() for x in _all_tables])
+
+    def return_text_repr_schema(self, include_views=False) -> str:
+        _out = []
+        _all_tables = self.return_tables(Data_Table_Type.TABLE)
+        if include_views:
+            _all_tables += self.return_tables(Data_Table_Type.VIEW)
+
+        for table in _all_tables:
+            table_text_repr = f'{table.name} : '
+            table_text_repr += " ,".join([x.name for x in table.columns])
+            _out.append(table_text_repr)
+
+        return "\n".join(_out)
