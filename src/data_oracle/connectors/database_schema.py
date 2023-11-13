@@ -43,7 +43,8 @@ class Table(BaseDbObject):
                  _pk_name: str,
                  _columns: list[Column],
                  _type: Type[Data_Table_Type],
-                 _fk_relations: list[Foreign_Key_Relation]):
+                 _fk_relations: list[Foreign_Key_Relation]
+                 ):
         self.name = _name
         self.columns = _columns
         self.type = _type
@@ -51,8 +52,11 @@ class Table(BaseDbObject):
         self.pk_name = _pk_name
         self.fk_relations = _fk_relations
 
-    def return_columns(self) -> list[dict]:
-        return [x.return_data() for x in self.columns]
+    def get_cols(self) -> list[Column]:
+        return self.columns
+
+    def return_columns_layout(self) -> list[dict]:
+        return [x.return_data() for x in self.get_cols()]
 
     def has_pk(self) -> bool:
         return len(self.pk) > 0
@@ -60,7 +64,7 @@ class Table(BaseDbObject):
     def code_representation_str(self) -> str:
         _str_repr = ""
         _str_repr += f"CREATE TABLE {self.name}(\n"
-        _str_repr += ",\n".join([x.return_sql_definition() for x in self.columns])
+        _str_repr += ",\n".join([x.return_sql_definition() for x in self.get_cols()])
 
         if self.has_pk():
             _str_repr += ",\n"
@@ -79,45 +83,39 @@ class Table(BaseDbObject):
 class Database(BaseDbObject):
     def __init__(self, _name: str):
         self.name = _name
-        self.tables = {
-            Data_Table_Type.TABLE: {},
-            Data_Table_Type.VIEW: {}
-        }
+        self.tables = []
+        self.filter_active = False
+        self.filter_list = []
 
-    def register_table(self, _table: Type[Table]) -> None:
-        self.tables[_table.type][_table.name] = _table
+    def register_table(self, _table: Table) -> None:
+        self.tables.append(_table)
 
     def register_tables(self, _tables: list[Table]) -> None:
         for _table in _tables:
             self.register_table(_table)
 
-    def return_layout(self):
-        out = {}
-        for table_type in self.tables:
-            out[table_type] = {}
-            current_table_type = self.tables[table_type]
-            for _table in current_table_type:
-                out[table_type][_table] = current_table_type[_table].return_columns()
-        return out
+    def get_tables(self) -> list[Type[Table]]:
+        if self.filter_active:
+            pass
+        return self.tables
 
-    def return_tables(self, _key: Data_Table_Type) -> list[Type[Table]]:
-        return [self.tables[_key][x] for x in self.tables[_key].keys()]
-
-    def return_code_repr_schema(self, include_views=False) -> str:
-        _all_tables = self.return_tables(Data_Table_Type.TABLE)
-        if include_views:
-            _all_tables += self.return_tables(Data_Table_Type.VIEW)
+    def return_code_repr_schema(self, exclude_views=False) -> str:
+        _all_tables = self.get_tables()
+        if exclude_views:
+            view_filter = lambda x: True if x.type != Data_Table_Type.VIEW else False
+            _all_tables = filter(view_filter, _all_tables)
         return "\n\n".join([x.code_representation_str() for x in _all_tables])
 
-    def return_text_repr_schema(self, include_views=False) -> str:
+    def return_text_repr_schema(self, exclude_views=False) -> str:
         _out = []
-        _all_tables = self.return_tables(Data_Table_Type.TABLE)
-        if include_views:
-            _all_tables += self.return_tables(Data_Table_Type.VIEW)
+        _all_tables = self.get_tables()
+        if exclude_views:
+            view_filter = lambda x: True if x.type != Data_Table_Type.VIEW else False
+            _all_tables = filter(view_filter, _all_tables)
 
         for table in _all_tables:
             table_text_repr = f'{table.name} : '
-            table_text_repr += " ,".join([x.name for x in table.columns])
+            table_text_repr += " ,".join([x.name for x in table.get_cols()])
             _out.append(table_text_repr)
 
         return "\n".join(_out)

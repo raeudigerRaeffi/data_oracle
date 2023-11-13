@@ -72,7 +72,17 @@ class SqlAlchemyConnector(BaseDBConnector):
         """
         Returns list of view names
         """
-        return self.inspection.get_view_names()
+        view_names = self.inspection.get_view_names()
+        for _table in view_names:
+            self.pk[_table] = {x: x for x in self.inspection.get_pk_constraint(_table)["constrained_columns"]}
+            self.fk_relations[_table] = {}
+            fk_relations = self.inspection.get_foreign_keys(_table)
+            for fk_relation in fk_relations:
+                for _col in fk_relation["constrained_columns"]:
+                    self.fk_relations[_table][_col] = fk_relation["referred_table"]
+
+        return view_names
+
 
     def return_all_table_column_info(self, table_name):
         out = []

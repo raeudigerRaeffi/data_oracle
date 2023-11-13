@@ -10,7 +10,7 @@ authors = [
 ]
 description = "A package covering all utilities required for text to sql"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "psycopg2-binary==2.9.8",
     "pytz==2023.3.post1",
