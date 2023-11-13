@@ -81,7 +81,6 @@ class SqlAlchemyConnector(BaseDBConnector):
 
         return view_names
 
-
     def return_all_table_column_info(self, table_name):
         out = []
         all_cols = self.inspection.get_columns(table_name)
@@ -101,7 +100,7 @@ class SqlAlchemyConnector(BaseDBConnector):
         return out
 
     @override
-    def return_table_columns(self, table_name, _table_type):
+    def return_table_columns(self, table_name, _table_type) -> Table:
         """
         Returns list of columns of table
         """
@@ -112,7 +111,7 @@ class SqlAlchemyConnector(BaseDBConnector):
             x["referred_table"],
             x["referred_columns"])
             for x in self.inspection.get_foreign_keys(table_name)]
-        return Table(table_name, _pk_name, all_info, _table_type,fk_relations)
+        return Table(table_name, _pk_name, all_info, _table_type, fk_relations)
 
     @override
     def execute_sql_statement(self, _sql):

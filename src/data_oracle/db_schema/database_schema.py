@@ -80,22 +80,12 @@ class Database(BaseDbObject):
         for _table in _tables:
             self.register_table(_table)
 
-    def release_filters(self):
+    def release_filters(self) -> None:
         self.filter_active = False
         self.filter_list = []
         self.filtered_tables = []
 
-    def apply_filter(self, table_names: list[str] = None, regex_filter: str = None) -> None:
-        self.filtered_tables = []
-        if table_names == None and regex_filter == None:
-            raise ValueError(f"The function needs to be called with a valid argument")
-        if table_names != None:
-            new_filter = filter(table_names, Filter_Type.NAME)
-        else:
-            new_filter = filter(regex_filter, Filter_Type.REGEX)
-        self.filter_active = True
-        self.filter_list.append(new_filter)
-
+    def determine_filtered_elements(self) -> None:
         filter_name_hashmap = {x: None for a in self.filter_list if a.classification == Filter_Type.NAME for x in
                                a.value}
         regex_filters = [re.compile(x.value) for x in self.filter_list if x.classification == Filter_Type.REGEX]
@@ -108,14 +98,26 @@ class Database(BaseDbObject):
             if _table.name not in filter_name_hashmap and not matched_regex:
                 self.filtered_tables.append(_table)
 
-    def apply_name_filter(self, _table_names: list[str]):
+    def apply_filter(self, table_names: list[str] = None, regex_filter: str = None) -> None:
+        self.filtered_tables = []
+        if table_names == None and regex_filter == None:
+            raise ValueError(f"The function needs to be called with a valid argument")
+        if table_names != None:
+            new_filter = filter(table_names, Filter_Type.NAME)
+        else:
+            new_filter = filter(regex_filter, Filter_Type.REGEX)
+        self.filter_active = True
+        self.filter_list.append(new_filter)
+        self.determine_filtered_elements()
+
+    def apply_name_filter(self, _table_names: list[str]) -> None:
         self.apply_filter(table_names=_table_names)
 
-    def apply_regex_filter(self, _regex_filter: str):
+    def apply_regex_filter(self, _regex_filter: str) -> None:
         self.apply_filter(regex_filter=_regex_filter)
 
-    def get_filtered_tables(self):
-        return list(set(self.tables) - set(self.filtered_tables))
+    def get_filtered_tables(self) -> list[str]:
+        return [x.name for x in list(set(self.tables) - set(self.filtered_tables))]
 
     def get_tables(self) -> list[Type[Table]]:
         if self.filter_active:

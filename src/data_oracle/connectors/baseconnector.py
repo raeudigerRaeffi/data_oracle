@@ -1,6 +1,6 @@
 from typing import Union
 from .connection_class import connection_details
-from ..db_schema import Database
+from ..db_schema import Database, Table
 from ..enums import Data_Table_Type
 
 connection_info = Union[connection_details]
@@ -37,7 +37,7 @@ class BaseDBConnector:
         """
         pass
 
-    def return_table_columns(self,table_name:str,_table_type):
+    def return_table_columns(self,table_name:str,_table_type) -> Table:
         """
         @table_name:str
         Returns list of columns of table
@@ -52,23 +52,23 @@ class BaseDBConnector:
 
         pass
 
-    def return_table_column_info(self):
+    def return_table_column_info(self) -> list[Table]:
         """
         Returns dictionary containing table_name : [column_name] pairs
         """
         all_tables = self.return_table_names()
         return [self.return_table_columns(x,Data_Table_Type.TABLE) for x in all_tables]
 
-    def return_view_column_info(self):
+    def return_view_column_info(self) -> list[Table]:
         """
-        Returns dictionary containing table_name : [column_name] pairs
+        Returns list containing table_name : [column_name] pairs
         """
         all_tables = self.return_view_names()
         return [self.return_table_columns(x,Data_Table_Type.VIEW) for x in all_tables]
 
-    def return_db_layout(self):
+    def return_db_layout(self) -> Database:
         return self.db
-    def scan_db(self):
+    def scan_db(self) -> Database:
         self.db.register_tables(self.return_view_column_info())
         self.db.register_tables(self.return_table_column_info())
         return self.return_db_layout()
