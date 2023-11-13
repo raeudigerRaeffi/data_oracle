@@ -1,11 +1,10 @@
 from typing import Type
 from src.data_oracle.enums import data_types, Data_Table_Type
 from .base_db_class import BaseDbObject
-from .foreign_key_schema import  Foreign_Key_Relation
-
-
-
-
+from .foreign_key_schema import Foreign_Key_Relation
+from .filter import filter
+from ..enums import Filter_Type
+import re
 
 
 class Column(BaseDbObject):
@@ -28,7 +27,7 @@ class Table(BaseDbObject):
                  _name: str,
                  _pk_name: str,
                  _columns: list[Column],
-                 _type: Type[Data_Table_Type],
+                 _type: Data_Table_Type,
                  _fk_relations: list[Foreign_Key_Relation]
                  ):
         self.name = _name
@@ -68,10 +67,11 @@ class Table(BaseDbObject):
 
 class Database(BaseDbObject):
     def __init__(self, _name: str):
-        self.name = _name
-        self.tables = []
-        self.filter_active = False
-        self.filter_list = []
+        self.name: str = _name
+        self.tables: list[Table] = []
+        self.filter_active: bool = False
+        self.filter_list: list[filter] = []
+        self.filtered_tables: list[Table] = []
 
     def register_table(self, _table: Table) -> None:
         self.tables.append(_table)
@@ -80,13 +80,46 @@ class Database(BaseDbObject):
         for _table in _tables:
             self.register_table(_table)
 
+    def release_filters(self):
+        self.filter_active = False
+        self.filter_list = []
+        self.filtered_tables = []
 
-    def apply_filter(self,table_names:list[str],_regex_filter:str=None):
-        pass
+    def apply_filter(self, table_names: list[str] = None, regex_filter: str = None) -> None:
+        self.filtered_tables = []
+        if table_names == None and regex_filter == None:
+            raise ValueError(f"The function needs to be called with a valid argument")
+        if table_names != None:
+            new_filter = filter(table_names, Filter_Type.NAME)
+        else:
+            new_filter = filter(regex_filter, Filter_Type.REGEX)
+        self.filter_active = True
+        self.filter_list.append(new_filter)
+
+        filter_name_hashmap = {x: None for a in self.filter_list if a.classification == Filter_Type.NAME for x in
+                               a.value}
+        regex_filters = [re.compile(x.value) for x in self.filter_list if x.classification == Filter_Type.REGEX]
+
+        for _table in self.tables:
+            matched_regex = False
+            for reg_patter in regex_filters:
+                if reg_patter.match(_table.name):
+                    matched_regex = True
+            if _table.name not in filter_name_hashmap and not matched_regex:
+                self.filtered_tables.append(_table)
+
+    def apply_name_filter(self, _table_names: list[str]):
+        self.apply_filter(table_names=_table_names)
+
+    def apply_regex_filter(self, _regex_filter: str):
+        self.apply_filter(regex_filter=_regex_filter)
+
+    def get_filtered_tables(self):
+        return list(set(self.tables) - set(self.filtered_tables))
 
     def get_tables(self) -> list[Type[Table]]:
         if self.filter_active:
-            pass
+            return self.filtered_tables
         return self.tables
 
     def return_code_repr_schema(self, exclude_views=False) -> str:

@@ -1,12 +1,7 @@
-from enum import Enum
+from .base_enum import BaseEnum
 
 
-class BaseEnum(str,Enum):
-    def __str__(self):
-        return str(self.value)
 
-    def __repr__(self):
-        return str(self.value)
 
 
 class Sql_Alchemy_Types(BaseEnum):
