@@ -1,25 +1,11 @@
 from typing import Type
-from ..enums import data_types, Data_Table_Type
+from src.data_oracle.enums import data_types, Data_Table_Type
+from .base_db_class import BaseDbObject
+from .foreign_key_schema import  Foreign_Key_Relation
 
 
-class BaseDbObject:
-    def __str__(self):
-        return str(vars(self))
-
-    def __repr__(self):
-        return str(vars(self))
 
 
-class Foreign_Key_Relation(BaseDbObject):
-    def __init__(self, _cols: list[str], ref_table: str, ref_cols: list[str]):
-        self.constrained_columns = _cols
-        self.referred_table = ref_table
-        self.referred_columns = ref_cols
-
-    def return_sql_definition(self) -> str:
-        _out = f'FOREIGN KEY ({",".join(self.constrained_columns)}) REFERENCES '
-        _out += f'{self.referred_table}({",".join(self.referred_columns)})'
-        return _out
 
 
 class Column(BaseDbObject):
@@ -93,6 +79,10 @@ class Database(BaseDbObject):
     def register_tables(self, _tables: list[Table]) -> None:
         for _table in _tables:
             self.register_table(_table)
+
+
+    def apply_filter(self,table_names:list[str],_regex_filter:str=None):
+        pass
 
     def get_tables(self) -> list[Type[Table]]:
         if self.filter_active:

@@ -1,6 +1,6 @@
 from typing import Union
 from .connection_class import connection_details
-from .database_schema import Column,Table, Database
+from ..db_schema import Database
 from ..enums import Data_Table_Type
 
 connection_info = Union[connection_details]

@@ -1,11 +1,9 @@
-import asyncio
 from .baseconnector import BaseDBConnector
 from typing import Type
 from sqlalchemy import create_engine, URL, inspect, text
-from .database_schema import Column, Table, Foreign_Key_Relation
+from ..db_schema import Column, Table, Foreign_Key_Relation
 from .connection_class import connection_details
 from overrides import override
-from ..enums import data_types, Data_Table_Type
 
 
 class SqlAlchemyConnector(BaseDBConnector):
