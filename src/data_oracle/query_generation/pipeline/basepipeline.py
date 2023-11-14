@@ -72,7 +72,7 @@ class PipelineSqlGen:
             raise NotImplementedError("Not yet implemented")
 
         elif prompting_mode == Prompt_Type.ZERO_SHOT:
-            raise NotImplementedError("Not yet implemented")
+            pass
 
         prompt += f'Question: {question} \n'
         prompt += f'Database:\n{self.return_db_prompt()}\n'

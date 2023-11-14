@@ -1,9 +1,8 @@
 from typing import Type
-from src.data_oracle.enums import data_types, Data_Table_Type
 from .base_db_class import BaseDbObject
 from .foreign_key_schema import Foreign_Key_Relation
 from .filter import filter
-from ..enums import Filter_Type
+from ..enums import Filter_Type, Data_Table_Type
 import re
 
 
