@@ -1,7 +1,7 @@
-from typing import Type
+from typing import Dict,Union
 from .base_db_class import BaseDbObject
 from .foreign_key_schema import Foreign_Key_Relation
-from .filter import filter
+from .filterobject import FilterObject
 from ..enums import Filter_Type, Data_Table_Type
 import re
 
@@ -10,8 +10,8 @@ class FilterClass:
 
     def __init__(self):
         self.filter_active: bool = False
-        self.filter_list: list[filter] = []
-        self.filtered_content: list[Table] = []
+        self.filter_list: list[FilterObject] = []
+        self.filtered_content: list[Table|Column] = []
 
     def release_filters(self) -> None:
         self.filter_active = False
@@ -36,9 +36,9 @@ class FilterClass:
         if content_names == None and regex_filter == None:
             raise ValueError(f"The function needs to be called with a valid argument")
         if content_names != None:
-            new_filter = filter(content_names, Filter_Type.NAME)
+            new_filter = FilterObject(content_names, Filter_Type.NAME)
         else:
-            new_filter = filter(regex_filter, Filter_Type.REGEX)
+            new_filter = FilterObject(regex_filter, Filter_Type.REGEX)
         self.filter_active = True
         self.filter_list.append(new_filter)
         self.determine_filtered_elements(target)
@@ -109,6 +109,12 @@ class Table(BaseDbObject, FilterClass):
     def apply_column_regex_filter(self, _regex_filter: str) -> None:
         self.apply_filter(self.columns, regex_filter=_regex_filter)
 
+    def get_filtered_columns(self) -> list[str]:
+        if self.filter_active:
+            return [x.name for x in list(set(self.columns) - set(self.filtered_content))]
+        else:
+            return []
+
     def code_representation_str(self) -> str:
         _str_repr = ""
         _str_repr += f"CREATE TABLE {self.name}(\n"
@@ -147,12 +153,19 @@ class Database(BaseDbObject, FilterClass):
     def apply_table_regex_filter(self, _regex_filter: str) -> None:
         self.apply_filter(self.tables, regex_filter=_regex_filter)
 
-    def apply_column_name_filter(self):
-        pass
+    def apply_column_name_filter(self, filter_list: Dict[str, list[str]]):
+        for table in self.tables:
+            if table.name in filter_list:
+                table.apply_column_name_filter(filter_list[table.name])
 
-    def apply_column_regex_filter(self):
-        pass
+    def apply_column_regex_filter(self, filter_list: Dict[str, str]):
+        for table in self.tables:
+            if table.name in filter_list:
+                table.apply_column_regex_filter(filter_list[table.name])
 
+    def release_column_filters(self):
+        for table in self.tables:
+            table.release_filters()
 
     def get_filtered_tables(self) -> list[str]:
         if self.filter_active:
