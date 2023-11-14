@@ -30,11 +30,11 @@ class PipelineSqlGen:
         self.db = new_db
 
     def apply_table_name_filter(self, _table_names: list[str]) -> list[str]:
-        self.db.apply_name_filter(_table_names)
+        self.db.apply_table_name_filter(_table_names)
         return self.db.get_filtered_tables()
 
     def apply_table_regex_filter(self, _regex: str) -> list[str]:
-        self.db.apply_regex_filter(_regex)
+        self.db.apply_table_regex_filter(_regex)
         return self.db.get_filtered_tables()
 
     def set_custom_examples(self, examples: Example):
