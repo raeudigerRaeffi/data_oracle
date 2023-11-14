@@ -37,7 +37,7 @@ class PipelineSqlGen:
         self.db.apply_regex_filter(_regex)
         return self.db.get_filtered_tables()
 
-    def set_examples(self, examples: Example):
+    def set_custom_examples(self, examples: Example):
         custom_prompt = ""
         for i in range(len(examples["db"])):
             custom_prompt += f'Question: {examples["question"][i]} \n'
@@ -48,6 +48,10 @@ class PipelineSqlGen:
             custom_prompt += f'Answer: {examples["answer"][i]}\n\n'
         self.custom_prompt = custom_prompt
         print("GENERATED CUSTOM FEW SHOT PROMPT:\n", self.custom_prompt)
+
+    def overwrite_custom_examples(self,provided_examples:str):
+        self.custom_prompt = provided_examples
+
 
     def return_db_prompt(self):
         #TODO allow different db representations like text custom
