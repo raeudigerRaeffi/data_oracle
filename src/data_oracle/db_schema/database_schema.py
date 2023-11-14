@@ -116,7 +116,10 @@ class Database(BaseDbObject):
         self.apply_filter(regex_filter=_regex_filter)
 
     def get_filtered_tables(self) -> list[str]:
-        return [x.name for x in list(set(self.tables) - set(self.filtered_tables))]
+        if self.filter_active:
+            return [x.name for x in list(set(self.tables) - set(self.filtered_tables))]
+        else:
+            return []
 
     def get_tables(self) -> list[Table]:
         if self.filter_active:
