@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "data_oracle"
-version = "0.0.2.a"
+version = "0.0.3.a"
 authors = [
   { name="Raffael Schön", email="raffaelscho@gmail.com" },
 ]
