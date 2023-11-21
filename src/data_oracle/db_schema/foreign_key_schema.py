@@ -1,4 +1,6 @@
 from .base_db_class import BaseDbObject
+
+
 class Foreign_Key_Relation(BaseDbObject):
     def __init__(self, _cols: list[str], ref_table: str, ref_cols: list[str]):
         self.constrained_columns = _cols

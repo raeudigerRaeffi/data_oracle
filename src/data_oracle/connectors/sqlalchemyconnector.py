@@ -8,7 +8,7 @@ from overrides import override
 
 class SqlAlchemyConnector(BaseDBConnector):
     """
-    Connector available for all
+    Connector available for all Sql Dbs that can be accessed with Sqlalchemy
     """
 
     def __init__(self, connection_data: Type[connection_details]):
@@ -81,7 +81,7 @@ class SqlAlchemyConnector(BaseDBConnector):
 
         return view_names
 
-    def return_all_table_column_info(self, table_name):
+    def return_all_table_column_info(self, table_name: str) -> list[Column]:
         out = []
         all_cols = self.inspection.get_columns(table_name)
         for _col in all_cols:

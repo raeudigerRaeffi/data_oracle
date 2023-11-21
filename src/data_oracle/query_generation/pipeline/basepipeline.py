@@ -20,6 +20,10 @@ class PipelineSqlGen:
         self.custom_prompt = None
 
     def reload_database(self) -> None:
+        """
+        Reloads database layout and copies over all relevant filters
+        @return: None
+        """
         filter_list = self.db.filter_list
         filter_active = self.db.filter_active
 
@@ -30,14 +34,29 @@ class PipelineSqlGen:
         self.db = new_db
 
     def apply_table_name_filter(self, _table_names: list[str]) -> list[str]:
+        """
+        Applies name filter to database
+        @param _table_names: List of names to be filterd
+        @return: List of tables that are now excluded via filter mechanism
+        """
         self.db.apply_table_name_filter(_table_names)
         return self.db.get_filtered_tables()
 
     def apply_table_regex_filter(self, _regex: str) -> list[str]:
+        """
+        Applies regex filter to name of tables in db
+        @param _regex: regex string based on which the table is filtered
+        @return: List of tables that are now excluded via filter mechanism
+        """
         self.db.apply_table_regex_filter(_regex)
         return self.db.get_filtered_tables()
 
-    def set_custom_examples(self, examples: Example):
+    def set_custom_examples(self, examples: Example)->None:
+        """
+        Based on a list of examples generate a custom few shot eample prompt
+        @param examples: Example object containing all examples
+        @return: None
+        """
         custom_prompt = ""
         for i in range(len(examples["db"])):
             custom_prompt += f'Question: {examples["question"][i]} \n'
