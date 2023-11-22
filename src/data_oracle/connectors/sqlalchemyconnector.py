@@ -28,6 +28,7 @@ class SqlAlchemyConnector(BaseDBConnector):
             'SQLite': 'sqlite',
         }
         driver = drivername_mapper[connection_data.database_type]
+        self.type = connection_data.database_type
         url_object = URL.create(
             driver,
             username=connection_data.username,
