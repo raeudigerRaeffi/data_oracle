@@ -1,10 +1,11 @@
 from typing import Dict, Union
 from .base_db_class import BaseDbObject
 from .foreign_key_schema import Foreign_Key_Relation
-from .filterobject import FilterObject
+from .filterobject import FilterObject, EmbeddingContainer
 from ..enums import Filter_Type, Data_Table_Type
 from .utils import calc_embedding
 import re
+from torch import Tensor
 
 
 class FilterClass:
@@ -31,8 +32,8 @@ class FilterClass:
         """
         filter_name_hashmap = {}
         regex_filters = []
-
-        is_column = isinstance(content[0],Column)
+        embedding_filter: EmbeddingContainer | None = None
+        is_column = isinstance(content[0], Column)
 
         for _filter in self.filter_list:
             if _filter.classification == Filter_Type.NAME:
@@ -41,7 +42,13 @@ class FilterClass:
             elif _filter.classification == Filter_Type.REGEX:
                 regex_filters.append(re.compile(_filter.value))
             elif _filter.classification == Filter_Type.EMBEDDING:
-                pass
+                if embedding_filter is not None:
+                    raise ValueError(f"Only one embedding filter can be active at a time, but a filter for Question\n"
+                                     f"{embedding_filter.nl_question} \n"
+                                     f"and Question \n"
+                                     f"{_filter.value.nl_question}\n"
+                                     f"was found")
+                embedding_filter = _filter.value
 
         for _item in content:
             matched_regex = False
@@ -55,21 +62,28 @@ class FilterClass:
             if _item.name not in filter_name_hashmap and not matched_regex:
                 self.filtered_content.append(_item)
 
-    def apply_filter(self, target, content_names: list[str] = None, regex_filter: str = None) -> None:
+    def apply_filter(self,
+                     target,
+                     content_names: list[str] = None,
+                     regex_filter: str = None,
+                     embedding_filter: FilterObject = None) -> None:
         """
         Function which applies an active function to the object
+        @param embedding_filter: Fdy
         @param target: list of columns or tables
         @param content_names: list of object names
         @param regex_filter: regex pattern
         @return: None
         """
         self.filtered_content = []
-        if content_names == None and regex_filter == None:
+        if content_names is None and regex_filter is None and embedding_filter is None:
             raise ValueError(f"The function needs to be called with a valid argument")
-        if content_names != None:
-            new_filter = FilterObject(content_names, Filter_Type.NAME)
+        if content_names is not None:
+            new_filter = FilterObject(value=content_names, _type=Filter_Type.NAME)
+        elif regex_filter is not None:
+            new_filter = FilterObject(value=regex_filter, _type=Filter_Type.REGEX)
         else:
-            new_filter = FilterObject(regex_filter, Filter_Type.REGEX)
+            new_filter = embedding_filter
         self.filter_active = True
         self.filter_list.append(new_filter)
         self.determine_filtered_elements(target)
@@ -135,8 +149,6 @@ class Table(BaseDbObject, FilterClass):
         """
         return len(self.pk) > 0
 
-
-
     def apply_column_name_filter(self, _column_names: list[str]) -> None:
         """
         Applies filter which filters columns based on exact name matching
@@ -180,6 +192,9 @@ class Table(BaseDbObject, FilterClass):
         _str_repr += "\n)"
 
         return _str_repr
+
+    def apply_embedding_filter(self, embed_filter:FilterObject):
+        self.apply_filter(self.columns, embedding_filter=embed_filter)
 
 
 class Database(BaseDbObject, FilterClass):
@@ -240,6 +255,29 @@ class Database(BaseDbObject, FilterClass):
         for table in self.tables:
             if table.name in filter_list:
                 table.apply_column_regex_filter(filter_list[table.name])
+
+    def apply_embedding_filter(self,
+                               nl_question: str,
+                               embedding: Tensor,
+                               threshold: float,
+                               applicable_table: bool) -> None:
+        """
+
+        @param nl_question:
+        @param embedding:
+        @param threshold:
+        @param applicable_table:
+        @return:
+        """
+        embed_filter = FilterObject(value=embedding,
+                                    _type=Filter_Type.EMBEDDING,
+                                    nl_question=nl_question,
+                                    threshold=threshold
+                                    )
+        if applicable_table:
+            self.apply_filter(self.tables, embedding_filter=embed_filter)
+        for _table in self.tables:
+            _table.apply_embedding_filter(embed_filter)
 
     def release_column_filters(self) -> None:
         """
