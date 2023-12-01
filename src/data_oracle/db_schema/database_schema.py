@@ -1,8 +1,9 @@
-from typing import Dict,Union
+from typing import Dict, Union
 from .base_db_class import BaseDbObject
 from .foreign_key_schema import Foreign_Key_Relation
 from .filterobject import FilterObject
 from ..enums import Filter_Type, Data_Table_Type
+from .utils import calc_embedding
 import re
 
 
@@ -11,7 +12,7 @@ class FilterClass:
     def __init__(self):
         self.filter_active: bool = False
         self.filter_list: list[FilterObject] = []
-        self.filtered_content: list[Table|Column] = []
+        self.filtered_content: list[Table | Column] = []
 
     def release_filters(self) -> None:
         """
@@ -28,9 +29,17 @@ class FilterClass:
         @param content: list of tables or columns
         @return: None
         """
-        filter_name_hashmap = {x: None for a in self.filter_list if a.classification == Filter_Type.NAME for x in
-                               a.value}
-        regex_filters = [re.compile(x.value) for x in self.filter_list if x.classification == Filter_Type.REGEX]
+        filter_name_hashmap = {}
+        regex_filters = []
+
+        for _filter in self.filter_list:
+            if _filter.classification == Filter_Type.NAME:
+                for filter_name in _filter.value:
+                    filter_name_hashmap[filter_name] = None
+            elif _filter.classification == Filter_Type.REGEX:
+                regex_filters.append(re.compile(_filter.value))
+            else:
+                pass
 
         for _item in content:
             matched_regex = False
@@ -99,6 +108,7 @@ class Table(BaseDbObject, FilterClass):
         self.pk = [x for x in _columns if x.is_pk]  # pk can be composed of multiple columns
         self.pk_name = _pk_name
         self.fk_relations = _fk_relations
+        self.embedding = None
 
     def get_cols(self) -> list[Column]:
         """
@@ -119,7 +129,7 @@ class Table(BaseDbObject, FilterClass):
         """
         return len(self.pk) > 0
 
-    def determine_filtered_elements(self, content:list[Column]) -> None:
+    def determine_filtered_elements(self, content: list[Column]) -> None:
         """
         Determines which elements are to be filtered out based on active filters
         @param content: List of columns
@@ -225,7 +235,7 @@ class Database(BaseDbObject, FilterClass):
         """
         self.apply_filter(self.tables, regex_filter=_regex_filter)
 
-    def apply_column_name_filter(self, filter_list: Dict[str, list[str]])-> None:
+    def apply_column_name_filter(self, filter_list: Dict[str, list[str]]) -> None:
         """
         Applies a exact name filter to columns in a given table. Table is specified in key and the applied filters in the value list
         @param filter_list: dict object with table name as key and list of column names as value
@@ -271,6 +281,18 @@ class Database(BaseDbObject, FilterClass):
         if self.filter_active:
             return self.filtered_content
         return self.tables
+
+    def apply_embedding_model(self, embedding_model, embedding_tokenizer) -> None:
+        """
+        Applies embedding model to all table names and column names and fills the respective embedding values
+        @param embedding_model: Huggingface language model
+        @param embedding_tokenizer: Huggingface tokenizer model
+        @return: None
+        """
+        for table in self.tables:
+            table.embedding = calc_embedding(embedding_model, embedding_tokenizer, table.name)
+            for column in table.columns:
+                column.embedding = calc_embedding(embedding_model, embedding_tokenizer, column.name)
 
     def return_code_repr_schema(self, exclude_views=False) -> str:
         _all_tables = self.get_tables()
