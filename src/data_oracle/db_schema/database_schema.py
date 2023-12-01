@@ -32,17 +32,23 @@ class FilterClass:
         filter_name_hashmap = {}
         regex_filters = []
 
+        is_column = isinstance(content[0],Column)
+
         for _filter in self.filter_list:
             if _filter.classification == Filter_Type.NAME:
                 for filter_name in _filter.value:
                     filter_name_hashmap[filter_name] = None
             elif _filter.classification == Filter_Type.REGEX:
                 regex_filters.append(re.compile(_filter.value))
-            else:
+            elif _filter.classification == Filter_Type.EMBEDDING:
                 pass
 
         for _item in content:
             matched_regex = False
+            if is_column:
+                if _item.is_pk or _item.is_fk:
+                    self.filtered_content.append(_item)
+                    continue
             for reg_patter in regex_filters:
                 if reg_patter.match(_item.name):
                     matched_regex = True
@@ -129,27 +135,7 @@ class Table(BaseDbObject, FilterClass):
         """
         return len(self.pk) > 0
 
-    def determine_filtered_elements(self, content: list[Column]) -> None:
-        """
-        Determines which elements are to be filtered out based on active filters
-        @param content: List of columns
-        @return: None
-        """
-        filter_name_hashmap = {x: None for a in self.filter_list if a.classification == Filter_Type.NAME for x in
-                               a.value}
-        regex_filters = [re.compile(x.value) for x in self.filter_list if x.classification == Filter_Type.REGEX]
 
-        for _item in content:
-            matched_regex = False
-            if not _item.is_pk and not _item.is_fk:
-                for reg_patter in regex_filters:
-                    if reg_patter.match(_item.name):
-                        matched_regex = True
-                if _item.name not in filter_name_hashmap and not matched_regex:
-                    self.filtered_content.append(_item)
-            else:
-                # skip primary keys
-                self.filtered_content.append(_item)
 
     def apply_column_name_filter(self, _column_names: list[str]) -> None:
         """
