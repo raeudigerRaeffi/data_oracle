@@ -210,32 +210,64 @@ class Database(BaseDbObject, FilterClass):
             self.register_table(_table)
 
     def apply_table_name_filter(self, _table_names: list[str]) -> None:
+        """
+        Applies a filter to remove all tables by exact name matching
+        @param _table_names: list of table names
+        @return: None
+        """
         self.apply_filter(self.tables, content_names=_table_names)
 
     def apply_table_regex_filter(self, _regex_filter: str) -> None:
+        """
+        Applies a filter to remove all tables by regex pattern matching based on table name
+        @param _regex_filter: regex string pattern
+        @return: None
+        """
         self.apply_filter(self.tables, regex_filter=_regex_filter)
 
-    def apply_column_name_filter(self, filter_list: Dict[str, list[str]]):
+    def apply_column_name_filter(self, filter_list: Dict[str, list[str]])-> None:
+        """
+        Applies a exact name filter to columns in a given table. Table is specified in key and the applied filters in the value list
+        @param filter_list: dict object with table name as key and list of column names as value
+        @return: None
+        """
         for table in self.tables:
             if table.name in filter_list:
                 table.apply_column_name_filter(filter_list[table.name])
 
-    def apply_column_regex_filter(self, filter_list: Dict[str, str]):
+    def apply_column_regex_filter(self, filter_list: Dict[str, str]) -> None:
+        """
+        Applies a regex name filter to columns in a given table. Table is specified in key and the value is the regex pattern
+        @param filter_list: dict object with table name as key and regex pattern as value
+        @return:
+        """
         for table in self.tables:
             if table.name in filter_list:
                 table.apply_column_regex_filter(filter_list[table.name])
 
-    def release_column_filters(self):
+    def release_column_filters(self) -> None:
+        """
+        Releases all filters in the db
+        @return:
+        """
         for table in self.tables:
             table.release_filters()
 
     def get_filtered_tables(self) -> list[str]:
+        """
+        Determine which tables are removed by filters
+        @return: list of table names
+        """
         if self.filter_active:
             return [x.name for x in list(set(self.tables) - set(self.filtered_content))]
         else:
             return []
 
     def get_tables(self) -> list[Table]:
+        """
+        Get all tables based on active filters
+        @return: list of Table objects
+        """
         if self.filter_active:
             return self.filtered_content
         return self.tables
