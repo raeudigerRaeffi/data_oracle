@@ -14,11 +14,20 @@ class FilterClass:
         self.filtered_content: list[Table|Column] = []
 
     def release_filters(self) -> None:
+        """
+        Removes all active filters
+        @return: None
+        """
         self.filter_active = False
         self.filter_list = []
         self.filtered_content = []
 
     def determine_filtered_elements(self, content) -> None:
+        """
+        Determines which elements are not filtered
+        @param content: list of tables or columns
+        @return: None
+        """
         filter_name_hashmap = {x: None for a in self.filter_list if a.classification == Filter_Type.NAME for x in
                                a.value}
         regex_filters = [re.compile(x.value) for x in self.filter_list if x.classification == Filter_Type.REGEX]
@@ -32,6 +41,13 @@ class FilterClass:
                 self.filtered_content.append(_item)
 
     def apply_filter(self, target, content_names: list[str] = None, regex_filter: str = None) -> None:
+        """
+        Function which applies an active function to the object
+        @param target: list of columns or tables
+        @param content_names: list of object names
+        @param regex_filter: regex pattern
+        @return: None
+        """
         self.filtered_content = []
         if content_names == None and regex_filter == None:
             raise ValueError(f"The function needs to be called with a valid argument")
@@ -53,9 +69,17 @@ class Column(BaseDbObject):
         self.embedding = None
 
     def return_data(self) -> dict:
+        """
+        Returns dict represenation of object
+        @return: Dict containing all self variables
+        """
         return vars(self)
 
     def return_sql_definition(self) -> str:
+        """
+        Returns column sql def
+        @return: str sql representation
+        """
         return f'{self.name} {self.type}'
 
 
@@ -134,6 +158,10 @@ class Table(BaseDbObject, FilterClass):
         self.apply_filter(self.columns, regex_filter=_regex_filter)
 
     def get_filtered_columns(self) -> list[str]:
+        """
+        Returns list of column names that are filtered out
+        @return: list of column names
+        """
         if self.filter_active:
             return [x.name for x in list(set(self.columns) - set(self.filtered_content))]
         else:
@@ -165,9 +193,19 @@ class Database(BaseDbObject, FilterClass):
         self.tables: list[Table] = []
 
     def register_table(self, _table: Table) -> None:
+        """
+        Appends table to database obj
+        @param _table: Table object
+        @return: None
+        """
         self.tables.append(_table)
 
     def register_tables(self, _tables: list[Table]) -> None:
+        """
+        Appends list of Tables to database obj
+        @param _tables: list of Table objects
+        @return: None
+        """
         for _table in _tables:
             self.register_table(_table)
 
