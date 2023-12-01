@@ -50,6 +50,7 @@ class Column(BaseDbObject):
         self.type = _type
         self.is_pk = _is_pk
         self.is_fk = _is_fk
+        self.embedding = None
 
     def return_data(self) -> dict:
         return vars(self)
@@ -76,6 +77,10 @@ class Table(BaseDbObject, FilterClass):
         self.fk_relations = _fk_relations
 
     def get_cols(self) -> list[Column]:
+        """
+        Returns all columns based on active filters
+        @return: All columns
+        """
         if self.filter_active:
             return self.filtered_content
         return self.columns
@@ -84,9 +89,18 @@ class Table(BaseDbObject, FilterClass):
         return [x.return_data() for x in self.get_cols()]
 
     def has_pk(self) -> bool:
+        """
+        Returns whether the table has a primary key
+        @return: Boolean indicating if primary key is present
+        """
         return len(self.pk) > 0
 
-    def determine_filtered_elements(self, content) -> None:
+    def determine_filtered_elements(self, content:list[Column]) -> None:
+        """
+        Determines which elements are to be filtered out based on active filters
+        @param content: List of columns
+        @return: None
+        """
         filter_name_hashmap = {x: None for a in self.filter_list if a.classification == Filter_Type.NAME for x in
                                a.value}
         regex_filters = [re.compile(x.value) for x in self.filter_list if x.classification == Filter_Type.REGEX]
@@ -103,10 +117,20 @@ class Table(BaseDbObject, FilterClass):
                 # skip primary keys
                 self.filtered_content.append(_item)
 
-    def apply_column_name_filter(self, _table_names: list[str]) -> None:
-        self.apply_filter(self.columns, content_names=_table_names)
+    def apply_column_name_filter(self, _column_names: list[str]) -> None:
+        """
+        Applies filter which filters columns based on exact name matching
+        @param _column_names: list of column names which are to be filtered
+        @return: None
+        """
+        self.apply_filter(self.columns, content_names=_column_names)
 
     def apply_column_regex_filter(self, _regex_filter: str) -> None:
+        """
+        Applies filter which filters columns based on whether their name is matched by a regex pattern
+        @param _regex_filter: string representation of regex pattern
+        @return: None
+        """
         self.apply_filter(self.columns, regex_filter=_regex_filter)
 
     def get_filtered_columns(self) -> list[str]:
