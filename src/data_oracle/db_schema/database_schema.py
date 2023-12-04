@@ -14,6 +14,7 @@ class FilterClass:
         self.filter_active: bool = False
         self.filter_list: list[FilterObject] = []
         self.filtered_content: list[Table | Column] = []
+        self.embedding_filter: EmbeddingContainer | None = None
 
     def release_filters(self) -> None:
         """
@@ -23,6 +24,7 @@ class FilterClass:
         self.filter_active = False
         self.filter_list = []
         self.filtered_content = []
+        self.embedding_filter = None
 
     def determine_filtered_elements(self, content) -> None:
         """
@@ -32,7 +34,6 @@ class FilterClass:
         """
         filter_name_hashmap = {}
         regex_filters = []
-        embedding_filter: EmbeddingContainer | None = None
         is_column = isinstance(content[0], Column)
 
         for _filter in self.filter_list:
@@ -41,14 +42,6 @@ class FilterClass:
                     filter_name_hashmap[filter_name] = None
             elif _filter.classification == Filter_Type.REGEX:
                 regex_filters.append(re.compile(_filter.value))
-            elif _filter.classification == Filter_Type.EMBEDDING:
-                if embedding_filter is not None:
-                    raise ValueError(f"Only one embedding filter can be active at a time, but a filter for Question\n"
-                                     f"{embedding_filter.nl_question} \n"
-                                     f"and Question \n"
-                                     f"{_filter.value.nl_question}\n"
-                                     f"was found")
-                embedding_filter = _filter.value
 
         for _item in content:
             matched_regex = False
@@ -60,7 +53,11 @@ class FilterClass:
                 if reg_patter.match(_item.name):
                     matched_regex = True
             if _item.name not in filter_name_hashmap and not matched_regex:
-                self.filtered_content.append(_item)
+                if self.embedding_filter is not None:
+                    if self.embedding_filter.embedding @ _item.embedding.T <= self.embedding_filter.threshold:
+                        self.filtered_content.append(_item)
+                else:
+                    self.filtered_content.append(_item)
 
     def apply_filter(self,
                      target,
@@ -80,12 +77,13 @@ class FilterClass:
             raise ValueError(f"The function needs to be called with a valid argument")
         if content_names is not None:
             new_filter = FilterObject(value=content_names, _type=Filter_Type.NAME)
+            self.filter_list.append(new_filter)
         elif regex_filter is not None:
             new_filter = FilterObject(value=regex_filter, _type=Filter_Type.REGEX)
+            self.filter_list.append(new_filter)
         else:
-            new_filter = embedding_filter
+            self.embedding_filter = embedding_filter.value
         self.filter_active = True
-        self.filter_list.append(new_filter)
         self.determine_filtered_elements(target)
 
 
@@ -193,7 +191,7 @@ class Table(BaseDbObject, FilterClass):
 
         return _str_repr
 
-    def apply_embedding_filter(self, embed_filter:FilterObject):
+    def apply_embedding_filter(self, embed_filter: FilterObject):
         self.apply_filter(self.columns, embedding_filter=embed_filter)
 
 

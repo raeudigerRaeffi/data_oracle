@@ -16,6 +16,7 @@ class FilterObject:
         @param value: can be either list[str], str, or EmbeddingContainer
         @param _type:
         """
+        self.value: list[str] | EmbeddingContainer | str | None = None
         if _type == Filter_Type.EMBEDDING:
             self.value = EmbeddingContainer(value, nl_question, threshold)
         else:
