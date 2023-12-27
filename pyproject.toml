@@ -22,7 +22,8 @@ dependencies = [
     "oracledb == 1.4.1",
     "pyodbc == 4.0.39",
     "transformers == 4.35.0",
-    "torch == 2.1.1"
+    "torch == 2.1.1",
+    "pandas == 2.1.4"
 ]
 
 classifiers = [

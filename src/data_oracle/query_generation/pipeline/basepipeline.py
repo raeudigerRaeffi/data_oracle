@@ -93,8 +93,8 @@ class PipelineSqlGen:
         elif prompting_mode == Prompt_Type.ZERO_SHOT:
             pass
 
-        prompt += f'Question: {question} \n'
         prompt += f'Database:\n{self.return_db_prompt()}\n'
+        prompt += f'Question: {question} \n'
         prompt += f'Answer: SELECT '
 
         return prompt

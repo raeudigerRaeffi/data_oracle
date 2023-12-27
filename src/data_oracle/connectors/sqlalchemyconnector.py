@@ -2,7 +2,7 @@ from .baseconnector import BaseDBConnector
 from typing import Type
 from sqlalchemy import create_engine, URL, inspect, text
 from ..db_schema import Column, Table, Foreign_Key_Relation
-from .connection_class import connection_details
+from .connection_class import connection_info
 from overrides import override
 
 
@@ -11,7 +11,7 @@ class SqlAlchemyConnector(BaseDBConnector):
     Connector available for all Sql Dbs that can be accessed with Sqlalchemy
     """
 
-    def __init__(self, connection_data: Type[connection_details]):
+    def __init__(self, connection_data: connection_info):
         super().__init__(connection_data)
         self.inspection = inspect(self.connection)
         self.fk_relations = {}
@@ -37,6 +37,14 @@ class SqlAlchemyConnector(BaseDBConnector):
             port=connection_data.port,
             database=connection_data.database_name,
         )
+        engine = None
+        if connection_data.ssl:
+            ssl_args = {"ssl": {
+                # or change to verify-ca or verify-full based on your requirement
+                'ca': connection_data.ssl_credentials,  # path to your .crt file
+            }}
+            return create_engine(url_object, connect_args=ssl_args)
+
         return create_engine(url_object)
 
     @override

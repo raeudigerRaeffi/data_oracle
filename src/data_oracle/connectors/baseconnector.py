@@ -1,9 +1,9 @@
 from typing import Union
-from .connection_class import connection_details
+from .connection_class import connection_info
 from ..db_schema import Database, Table
 from ..enums import Data_Table_Type
 
-connection_info = Union[connection_details]
+
 
 
 class BaseDBConnector:
