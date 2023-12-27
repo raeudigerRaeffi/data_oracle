@@ -1,4 +1,3 @@
-import torch
 
 
 def calc_embedding(model, tokenizer, _text):
