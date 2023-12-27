@@ -5,7 +5,7 @@ from .filterobject import FilterObject, EmbeddingContainer
 from ..enums import Filter_Type, Data_Table_Type
 from .utils import calc_embedding
 import re
-from torch import Tensor
+
 
 
 class FilterClass:
@@ -256,7 +256,7 @@ class Database(BaseDbObject, FilterClass):
 
     def apply_embedding_filter(self,
                                nl_question: str,
-                               embedding: Tensor,
+                               embedding,
                                threshold: float,
                                applicable_table: bool) -> None:
         """
