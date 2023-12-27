@@ -9,6 +9,7 @@ from ..enums import Data_Table_Type
 class BaseDBConnector:
 
     def __init__(self, connection_data: connection_info):
+        self.connection_data = connection_data
         self.type = None
         self.connection = self.connect(connection_data)
         self.db = self.register_db(connection_data)

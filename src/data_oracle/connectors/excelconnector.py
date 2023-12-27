@@ -6,10 +6,7 @@ from overrides import override
 import pandas as pd
 
 
-class CsvConnector(BaseDBConnector):
-    """
-    Connector available for all Sql Dbs that can be accessed with Sqlalchemy
-    """
+class ExcelConnector(BaseDBConnector):
 
     def __init__(self, _filepath: str):
         super().__init__(csv_connection(_filepath))
@@ -19,15 +16,15 @@ class CsvConnector(BaseDBConnector):
 
     @override
     def connect(self, connection_data: connection_info):
-        return pd.read_csv(connection_data.file_path)
+        return pd.ExcelFile(connection_data.file_path)
 
     @override
     def is_available(self):
         return True
 
     @override
-    def return_table_names(self):
-        return [self.db.name]
+    def return_table_names(self) -> list[str]:
+        return self.connection.sheet_names
 
     @override
     def return_view_names(self):
@@ -38,8 +35,9 @@ class CsvConnector(BaseDBConnector):
 
     def return_all_table_column_info(self, table_name: str) -> list[Column]:
         out = []
-        for column in self.connection:
-            data_type = str(self.connection[column].dtypes)
+        df = pd.read_excel(self.connection_data.file_path,table_name)
+        for column in df.columns:
+            data_type = str(df[column].dtypes)
             col_type = None
             if "int" in data_type:
                 col_type = "INT"
@@ -47,12 +45,14 @@ class CsvConnector(BaseDBConnector):
                 col_type = "FLOAT"
             elif "datetime" in data_type:
                 col_type = "DATE"
-            elif self.connection[column].dtypes == "object":
+            elif df[column].dtypes == "object":
                 col_type = "TEXT"
+
             new_col = Column(column, col_type, False, False)
             out.append(new_col)
 
         return out
+
     @override
     def return_table_columns(self, table_name, _table_type) -> Table:
         all_col = self.return_all_table_column_info(table_name)

@@ -1,4 +1,4 @@
-from data_oracle.db_schema import Column, Table, Database
+from src.data_oracle.db_schema import Column, Table, Database
 
 
 def test_apply_filter():
