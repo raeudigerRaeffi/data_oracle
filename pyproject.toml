@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "data_oracle"
-version = "0.0.4a1"
+version = "0.0.4a2"
 authors = [
   { name="Raffael Schön", email="raffaelscho@gmail.com" },
 ]
@@ -21,8 +21,6 @@ dependencies = [
     "pymysql == 1.1.0",
     "oracledb == 1.4.1",
     "pyodbc == 4.0.39",
-    "transformers == 4.35.0",
-    "torch == 2.1.1",
     "pandas == 2.1.4"
 ]
 
