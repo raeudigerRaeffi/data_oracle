@@ -1,6 +1,5 @@
 from .basepipeline import PipelineSqlGen
 from ...connectors import BaseDBConnector
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class Local_Pipeline(PipelineSqlGen):
