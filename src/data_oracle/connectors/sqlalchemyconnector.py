@@ -2,7 +2,7 @@ from .baseconnector import BaseDBConnector
 from typing import Type
 from sqlalchemy import create_engine, URL, inspect, text
 from ..db_schema import Column, Table, Foreign_Key_Relation
-from .connection_class import connection_info
+from .connection_class import connection_info,connection_details,file_connection
 from overrides import override
 
 
@@ -19,7 +19,6 @@ class SqlAlchemyConnector(BaseDBConnector):
 
     @override
     def connect(self, connection_data):
-        # connection_data.database_type
         drivername_mapper = {
             'MySQL': 'mysql+pymysql',
             'PostgreSQL': 'postgresql+psycopg2',
@@ -27,25 +26,29 @@ class SqlAlchemyConnector(BaseDBConnector):
             'Microsoft SQL Server': 'mssql+pyodbc',
             'SQLite': 'sqlite',
         }
-        driver = drivername_mapper[connection_data.database_type]
-        self.type = connection_data.database_type
-        url_object = URL.create(
-            driver,
-            username=connection_data.username,
-            password=connection_data.password,
-            host=connection_data.host,
-            port=connection_data.port,
-            database=connection_data.database_name,
-        )
-        engine = None
-        if connection_data.ssl:
-            ssl_args = {"ssl": {
-                # or change to verify-ca or verify-full based on your requirement
-                'ca': connection_data.ssl_credentials,  # path to your .crt file
-            }}
-            return create_engine(url_object, connect_args=ssl_args)
+        if type(connection_data) == connection_details:
 
-        return create_engine(url_object)
+            driver = drivername_mapper[connection_data.database_type]
+            self.type = connection_data.database_type
+            url_object = URL.create(
+                driver,
+                username=connection_data.username,
+                password=connection_data.password,
+                host=connection_data.host,
+                port=connection_data.port,
+                database=connection_data.database_name,
+            )
+
+            if connection_data.ssl:
+                ssl_args = {"ssl": {
+                    # or change to verify-ca or verify-full based on your requirement
+                    'ca': connection_data.ssl_credentials,  # path to your .crt file
+                }}
+                return create_engine(url_object, connect_args=ssl_args)
+
+            return create_engine(url_object)
+        elif type(connection_data) == file_connection:
+            return create_engine("sqlite:///"+connection_data.path)
 
     @override
     def is_available(self):

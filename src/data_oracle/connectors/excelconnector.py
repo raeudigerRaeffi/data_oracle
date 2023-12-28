@@ -57,3 +57,11 @@ class ExcelConnector(BaseDBConnector):
     def return_table_columns(self, table_name, _table_type) -> Table:
         all_col = self.return_all_table_column_info(table_name)
         return Table(table_name, None, all_col, _table_type, [])
+
+    @override
+    def execute_sql_statement(self, _sql):
+        """
+        @_sql:str
+        Returns result of sql statement
+        """
+        return ""
