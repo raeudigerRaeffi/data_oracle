@@ -2,7 +2,7 @@ from .baseconnector import BaseDBConnector
 from typing import Type
 from sqlalchemy import create_engine, URL, inspect, text
 from ..db_schema import Column, Table, Foreign_Key_Relation
-from .connection_class import connection_info,connection_details,file_connection
+from .connection_class import connection_info, connection_details, file_connection
 from overrides import override
 
 
@@ -48,7 +48,7 @@ class SqlAlchemyConnector(BaseDBConnector):
 
             return create_engine(url_object)
         elif type(connection_data) == file_connection:
-            return create_engine("sqlite:///"+connection_data.path)
+            return create_engine("sqlite:///" + connection_data.path)
 
     @override
     def is_available(self):
@@ -126,11 +126,21 @@ class SqlAlchemyConnector(BaseDBConnector):
         return Table(table_name, _pk_name, all_info, _table_type, fk_relations)
 
     @override
-    def execute_sql_statement(self, _sql):
+    def execute_sql_statement(self, _sql, _max_rows = None):
         """
         @_sql:str
         Returns result of sql statement
         """
+        results = []
         with self.connection.connect() as conn:
-            result = conn.execute(text(_sql))
-        return result
+            sql_res_conn = conn.execute(text(_sql))
+            results.append(sql_res_conn.keys())
+            counter = 0
+            for _row in sql_res_conn:
+                results.append(_row)
+                counter += 1
+                if _max_rows is not None and _max_rows < counter:
+                    break
+
+        return results
+

@@ -48,7 +48,7 @@ class BaseDBConnector:
         """
         pass
 
-    def execute_sql_statement(self, _sql):
+    def execute_sql_statement(self, _sql,_max_rows):
         """
         @_sql:str
         Returns result of sql statement
