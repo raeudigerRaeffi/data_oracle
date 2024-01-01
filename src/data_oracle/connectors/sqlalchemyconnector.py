@@ -134,9 +134,10 @@ class SqlAlchemyConnector(BaseDBConnector):
         results = []
         with self.connection.connect() as conn:
             sql_res_conn = conn.execute(text(_sql))
-            results.append(sql_res_conn.keys())
+            results.append([x for x in sql_res_conn.keys()])
             counter = 0
             for _row in sql_res_conn:
+                _row = [x for x in _row]
                 results.append(_row)
                 counter += 1
                 if _max_rows is not None and _max_rows < counter:
