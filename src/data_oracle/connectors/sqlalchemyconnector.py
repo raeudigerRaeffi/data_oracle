@@ -1,6 +1,6 @@
 from .baseconnector import BaseDBConnector
 from typing import Type
-from sqlalchemy import create_engine, URL, inspect, text
+from sqlalchemy import create_engine, URL, inspect, text, select
 from ..db_schema import Column, Table, Foreign_Key_Relation
 from .connection_class import connection_info, connection_details, file_connection
 from overrides import override
@@ -93,10 +93,44 @@ class SqlAlchemyConnector(BaseDBConnector):
 
         return view_names
 
+    def scan_columns_enum(self, col_list: list[Column], table_name: str):
+        max_row_select = 700
+        max_col_scan_size = 300
+
+        def column(matrix, i, max_row):
+            return [row[i] for row_i, row in enumerate(matrix, 1) if row_i < max_row]
+
+        statement = f"SELECT * FROM {table_name} LIMIT {max_row_select}"
+        with self.connection.connect() as conn:
+            sql_res_conn = conn.execute(text(statement))
+            valid_data_types = ["string", "text"]
+            sql_res = list(sql_res_conn)
+            for _index, _col in enumerate(col_list):
+                if any(x in _col.type.lower() for x in valid_data_types):
+                    counting_set = set()
+                    col_data = column(sql_res, _index, max_col_scan_size)
+                    for data_point in col_data:
+                        counting_set.add(data_point)
+                    comparison_size = max_col_scan_size if max_col_scan_size > len(sql_res) else len(sql_res)
+                    if len(counting_set) <= 0.1 * comparison_size:
+                        empty_field = 0
+                        counting_set = set()
+                        # go over all data now
+                        col_data = column(sql_res, _index, max_row_select)
+                        for data_point in col_data:
+                            counting_set.add(data_point)
+                            if data_point == "":
+                                empty_field +=1
+                        if (len(counting_set) +empty_field ) <= 0.1 * comparison_size:
+                            _col.enums = list(counting_set)
+
+        return col_list
+
     def return_all_table_column_info(self, table_name: str) -> list[Column]:
         out = []
         all_cols = self.inspection.get_columns(table_name)
         for _col in all_cols:
+            col_type = str(_col["type"])
             _name = _col["name"]
             _is_pk = False
             _is_fk = False
@@ -106,17 +140,21 @@ class SqlAlchemyConnector(BaseDBConnector):
             if _name in self.pk[table_name]:
                 _is_pk = True
 
-            new_col = Column(_name, _col["type"], _is_pk, _is_fk)
+            new_col = Column(_name, str(col_type), _is_pk, _is_fk)
             out.append(new_col)
 
         return out
 
     @override
-    def return_table_columns(self, table_name, _table_type) -> Table:
+    def return_table_columns(self, table_name, _table_type, scan_enums) -> Table:
         """
         Returns list of columns of table
         """
         all_info = self.return_all_table_column_info(table_name)
+
+        if scan_enums:
+            all_info = self.scan_columns_enum(all_info, table_name)
+
         _pk_name = self.inspection.get_pk_constraint(table_name)['name']
         fk_relations = [Foreign_Key_Relation(
             x["constrained_columns"],
@@ -126,7 +164,7 @@ class SqlAlchemyConnector(BaseDBConnector):
         return Table(table_name, _pk_name, all_info, _table_type, fk_relations)
 
     @override
-    def execute_sql_statement(self, _sql, _max_rows = None):
+    def execute_sql_statement(self, _sql, _max_rows=None):
         """
         @_sql:str
         Returns result of sql statement
@@ -144,4 +182,3 @@ class SqlAlchemyConnector(BaseDBConnector):
                     break
 
         return results
-

@@ -41,7 +41,7 @@ class BaseDBConnector:
         """
         pass
 
-    def return_table_columns(self, table_name: str, _table_type) -> Table:
+    def return_table_columns(self, table_name: str, _table_type,scan_enums:bool) -> Table:
         """
         @table_name:str
         Returns list of columns of table
@@ -56,24 +56,24 @@ class BaseDBConnector:
 
         pass
 
-    def return_table_column_info(self) -> list[Table]:
+    def return_table_column_info(self,scan_enums) -> list[Table]:
         """
         Returns dictionary containing table_name : [column_name] pairs
         """
         all_tables = self.return_table_names()
-        return [self.return_table_columns(x, Data_Table_Type.TABLE) for x in all_tables]
+        return [self.return_table_columns(x, Data_Table_Type.TABLE,scan_enums) for x in all_tables]
 
-    def return_view_column_info(self) -> list[Table]:
+    def return_view_column_info(self,scan_enums) -> list[Table]:
         """
         Returns list containing table_name : [column_name] pairs
         """
         all_tables = self.return_view_names()
-        return [self.return_table_columns(x, Data_Table_Type.VIEW) for x in all_tables]
+        return [self.return_table_columns(x, Data_Table_Type.VIEW,scan_enums) for x in all_tables]
 
     def return_db_layout(self) -> Database:
         return self.db
 
-    def scan_db(self) -> Database:
-        self.db.register_tables(self.return_view_column_info())
-        self.db.register_tables(self.return_table_column_info())
+    def scan_db(self,scan_enums=False) -> Database:
+        self.db.register_tables(self.return_view_column_info(scan_enums))
+        self.db.register_tables(self.return_table_column_info(scan_enums))
         return self.return_db_layout()

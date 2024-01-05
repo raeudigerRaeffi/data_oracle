@@ -88,11 +88,12 @@ class FilterClass:
 
 
 class Column(BaseDbObject):
-    def __init__(self, _name: str, _type, _is_pk=False, _is_fk: bool = False):
+    def __init__(self, _name: str, _type, _is_pk=False, _is_fk: bool = False,_enums:list[str]=None):
         self.name = _name
         self.type = _type
         self.is_pk = _is_pk
         self.is_fk = _is_fk
+        self.enums = _enums
         self.embedding = None
 
     def return_data(self) -> dict:
@@ -107,6 +108,8 @@ class Column(BaseDbObject):
         Returns column sql def
         @return: str sql representation
         """
+        if self.enums is not None:
+            return f"""{self.name} ENUM({",".join([ '"'+x+'"' for x in self.enums])})"""
         return f'{self.name} {self.type}'
 
 

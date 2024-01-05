@@ -14,9 +14,9 @@ class Example(NamedTuple):
 
 class PipelineSqlGen:
 
-    def __init__(self, _connection: BaseDBConnector):
+    def __init__(self, _connection: BaseDBConnector,scan_enums: bool = False):
         self.connection = _connection
-        self.db = _connection.scan_db()
+        self.db = _connection.scan_db(scan_enums)
         self.custom_prompt = None
 
     def reload_database(self) -> None:
